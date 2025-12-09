@@ -7,6 +7,7 @@ import '../../../../core/providers/profile_provider.dart';
 import '../../../../core/models/payment_method.dart';
 import '../../../../core/widgets/medicine_card.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/utils/snackbar.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
@@ -278,8 +279,28 @@ class CartScreen extends StatelessWidget {
                             controller: expiryController,
                             label: 'Expiry (MM/YY)',
                             hint: '08/27',
-                            keyboard: TextInputType.datetime,
-                          ),
+                      keyboard: TextInputType.datetime,
+                      onChanged: (value) {
+                        var digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+                        if (digits.length > 4) digits = digits.substring(0, 4);
+                        final buffer = StringBuffer();
+                        for (int i = 0; i < digits.length; i++) {
+                          buffer.write(digits[i]);
+                          if (i == 1 && digits.length > 2) buffer.write('/');
+                        }
+                        final formatted = buffer.toString();
+                        if (formatted != expiryController.text) {
+                          final sel = expiryController.selection.baseOffset +
+                              (formatted.length - value.length);
+                          expiryController.value = TextEditingValue(
+                            text: formatted,
+                            selection: TextSelection.collapsed(
+                              offset: sel.clamp(0, formatted.length),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -304,11 +325,10 @@ class CartScreen extends StatelessWidget {
                         final cardNumber = cardController.text.trim();
                         final digits = cardNumber.replaceAll(' ', '');
                         if (digits.length != 16) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Enter a 16-digit card number'),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                          showCartAwareSnackBar(
+                            context,
+                            message: 'Enter a 16-digit card number',
+                            isError: true,
                           );
                           return;
                         }
@@ -325,29 +345,26 @@ class CartScreen extends StatelessWidget {
                         final monthInt = int.tryParse(month) ?? 0;
                         final yearInt = int.tryParse(year.length == 2 ? '20$year' : year) ?? 0;
                         if (monthInt < 1 || monthInt > 12) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Enter a valid expiry month'),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                          showCartAwareSnackBar(
+                            context,
+                            message: 'Enter a valid expiry month',
+                            isError: true,
                           );
                           return;
                         }
                         if (yearInt < now.year || yearInt > now.year + 15) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Enter a valid expiry year'),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                          showCartAwareSnackBar(
+                            context,
+                            message: 'Enter a valid expiry year',
+                            isError: true,
                           );
                           return;
                         }
                         if (yearInt == now.year && monthInt < now.month) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Card is expired'),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                          showCartAwareSnackBar(
+                            context,
+                            message: 'Card is expired',
+                            isError: true,
                           );
                           return;
                         }

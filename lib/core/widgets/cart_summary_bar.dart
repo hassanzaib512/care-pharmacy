@@ -75,12 +75,3 @@ class CartSummaryBar extends StatelessWidget {
     );
   }
 }
-
-// Legacy helper kept for compatibility; no-op to avoid SnackBar usage for cart.
-Future<void> showCartAwareSnackBar(
-  BuildContext context, {
-  required String message,
-}) async {
-  // SnackBars for cart actions have been removed intentionally.
-  return;
-}

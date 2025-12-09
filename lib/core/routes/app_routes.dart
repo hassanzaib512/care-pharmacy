@@ -8,4 +8,7 @@ class AppRoutes {
   static const medicineDetail = '/medicine-detail';
   static const orderDetail = '/order-detail';
   static const paymentDetails = '/payment-details';
+  static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
+  static const changePassword = '/change-password';
 }

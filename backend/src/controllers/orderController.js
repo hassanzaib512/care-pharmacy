@@ -4,6 +4,11 @@ const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Medicine = require('../models/Medicine');
 const User = require('../models/User');
+const {
+  sendOrderPlacedUserEmail,
+  sendOrderPlacedAdminEmail,
+  sendOrderCancelledAdminEmail,
+} = require('../services/emailService');
 
 const isCancelableStatus = (status) => {
   const normalized = (status || '').toLowerCase();
@@ -78,6 +83,18 @@ const placeOrder = asyncHandler(async (req, res) => {
     paymentSnapshot: user.paymentMethod,
   });
 
+  try {
+    const detailedOrder = await Order.findById(order._id)
+      .populate('items.medicine', 'name price manufacturer')
+      .populate('user', 'name email address');
+    await Promise.all([
+      sendOrderPlacedUserEmail(user, detailedOrder),
+      sendOrderPlacedAdminEmail(detailedOrder),
+    ]);
+  } catch (err) {
+    console.error('Failed to send order placed emails', err);
+  }
+
   res.status(201).json({ success: true, message: 'Order placed', data: order });
 });
 
@@ -141,6 +158,15 @@ const cancelOrder = asyncHandler(async (req, res) => {
   order.status = 'cancelled';
   order.deliveryStatus = 'Cancelled';
   await order.save();
+
+  try {
+    const detailedOrder = await Order.findById(order._id)
+      .populate('items.medicine', 'name price manufacturer')
+      .populate('user', 'name email address');
+    await sendOrderCancelledAdminEmail(detailedOrder);
+  } catch (err) {
+    console.error('Failed to send order cancelled email', err);
+  }
 
   res.json({ success: true, message: 'Order cancelled', data: order });
 });

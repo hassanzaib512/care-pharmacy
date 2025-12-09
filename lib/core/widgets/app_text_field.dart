@@ -9,6 +9,9 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
+  final VoidCallback? onToggleVisibility;
+  final bool showVisibilityToggle;
+  final bool isObscured;
 
   const AppTextField({
     super.key,
@@ -20,6 +23,9 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.obscureText = false,
     this.onChanged,
+    this.onToggleVisibility,
+    this.showVisibilityToggle = false,
+    this.isObscured = false,
   });
 
   @override
@@ -35,12 +41,20 @@ class AppTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          obscureText: obscureText,
+          obscureText: showVisibilityToggle ? isObscured : obscureText,
           validator: validator,
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: icon != null ? Icon(icon) : null,
+            suffixIcon: showVisibilityToggle
+                ? IconButton(
+                    icon: Icon(
+                      isObscured ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: onToggleVisibility,
+                  )
+                : null,
           ),
         ),
       ],

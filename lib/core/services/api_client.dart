@@ -48,4 +48,10 @@ class ApiClient {
     final uri = Uri.parse('$baseUrl$path');
     return http.put(uri, headers: _headers(), body: jsonEncode(body));
   }
+
+  Future<http.Response> delete(String path, {Object? body}) {
+    final uri = Uri.parse('$baseUrl$path');
+    final encoded = body == null ? null : jsonEncode(body);
+    return http.delete(uri, headers: _headers(), body: encoded);
+  }
 }

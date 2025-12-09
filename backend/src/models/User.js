@@ -33,6 +33,8 @@ const userSchema = new mongoose.Schema(
     paymentMethod: paymentMethodSchema,
     role: { type: String, default: 'user' },
     avatarUrl: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );

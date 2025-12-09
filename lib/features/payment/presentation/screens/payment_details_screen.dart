@@ -6,6 +6,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/profile_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/utils/snackbar.dart';
 
 class PaymentDetailsScreen extends StatefulWidget {
   const PaymentDetailsScreen({super.key});
@@ -177,9 +178,10 @@ class _PaymentDetailsScreenState extends State<PaymentDetailsScreen> {
     );
 
     Navigator.pop(context);
-    ScaffoldMessenger.of(
+    showCartAwareSnackBar(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Payment method updated')));
+      message: 'Payment method updated',
+    );
   }
 
   void _formatCardNumber(String value) {

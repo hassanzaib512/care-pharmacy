@@ -6,6 +6,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/order_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/medicine_card.dart';
+import '../../../../core/utils/snackbar.dart';
 import '../../../home/presentation/screens/medicine_detail_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
@@ -76,25 +77,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     setState(() => _cancelling = true);
     final orders = context.read<OrderProvider>();
     final auth = context.read<AuthProvider>();
+    final navigator = Navigator.of(context);
     orders.updateToken(auth.token);
     final result = await orders.cancelOrder(_order!.id);
     if (result.success) {
       final updated = await orders.fetchOrder(_order!.id);
-      if (mounted && updated != null) {
+      if (!mounted) return;
+      if (updated != null) {
         setState(() => _order = updated);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message)),
-        );
-        Navigator.of(context).pop(); // back to orders listing
-      }
+      showCartAwareSnackBar(
+        context,
+        message: result.message,
+      );
+      navigator.pop(); // back to orders listing
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.red,
-        ),
+      showCartAwareSnackBar(
+        context,
+        message: result.message,
+        isError: true,
       );
     }
     if (mounted) setState(() => _cancelling = false);

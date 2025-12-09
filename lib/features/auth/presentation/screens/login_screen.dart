@@ -21,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _showError = false;
+  bool _passwordObscured = true;
 
   @override
   void dispose() {
@@ -70,13 +71,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildForm(context),
-                const SizedBox(height: 16),
-                if (_showError)
-                  Text(
-                    'Invalid credentials. Please check your email and password and try again.',
-                    style: TextStyle(color: Colors.red.shade700),
-                    textAlign: TextAlign.center,
+          _buildForm(context),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.forgotPassword);
+              },
+              child: const Text('Forgot password?'),
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (_showError)
+            Text(
+              'Invalid credentials. Please check your email and password and try again.',
+              style: TextStyle(color: Colors.red.shade700),
+              textAlign: TextAlign.center,
                   ),
                 const SizedBox(height: 16),
                 Row(
@@ -145,6 +156,11 @@ class _LoginScreenState extends State<LoginScreen> {
             hint: 'Enter your password',
             icon: Icons.lock_outline,
             obscureText: true,
+            showVisibilityToggle: true,
+            isObscured: _passwordObscured,
+            onToggleVisibility: () {
+              setState(() => _passwordObscured = !_passwordObscured);
+            },
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Password is required';
@@ -167,9 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final auth = context.read<AuthProvider>();
-    final navigator = Navigator.of(context);
-    final profile = context.read<ProfileProvider>();
-    final cart = context.read<CartProvider>();
 
     final success = await auth.login(email, password);
     if (!mounted) return;
@@ -178,6 +191,9 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     setState(() => _showError = false);
+    final profile = context.read<ProfileProvider>();
+    final cart = context.read<CartProvider>();
+    final navigator = Navigator.of(context);
     // Sync profile provider token and fetch profile
     profile.updateToken(auth.token);
     await profile.fetchProfile();
@@ -188,10 +204,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleLogin(BuildContext context) async {
     final auth = context.read<AuthProvider>();
-    final navigator = Navigator.of(context);
     final cart = context.read<CartProvider>();
     final profile = context.read<ProfileProvider>();
-
     final idToken = await GoogleAuthHelper.signInAndGetIdToken();
     if (idToken == null) {
       if (!mounted) return;
@@ -208,6 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await profile.fetchProfile();
     cart.clear();
     if (!mounted) return;
+    final navigator = Navigator.of(context);
     navigator.pushReplacementNamed(AppRoutes.home);
   }
 }

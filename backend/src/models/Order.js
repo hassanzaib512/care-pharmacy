@@ -50,6 +50,7 @@ const orderSchema = new mongoose.Schema(
       default: 'In Progress',
       trim: true,
     },
+    deliveredAt: { type: Date },
     addressSnapshot: addressSnapshotSchema,
     paymentSnapshot: paymentSnapshotSchema,
   },

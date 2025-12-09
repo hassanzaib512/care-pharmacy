@@ -249,27 +249,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     onOpen: _openMedicine,
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
           ),
+          if (cart.totalItems >= 0)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: SafeArea(
+                child: CartBubbleFab(
+                  itemCount: cart.totalItems,
+                  bottomInset: cart.bottomInset,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CartScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: cart.totalItems >= 0
-          ? CartBubbleFab(
-        itemCount: cart.totalItems,
-        bottomInset: cart.bottomInset,
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const CartScreen(),
-            ),
-          );
-        },
-      )
-          : null,
     );
   }
 

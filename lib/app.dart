@@ -10,6 +10,8 @@ import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/signup_screen.dart';
+import 'features/auth/presentation/screens/forgot_password_screen.dart';
+import 'features/auth/presentation/screens/reset_password_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/orders/presentation/screens/order_detail_screen.dart';
 import 'features/orders/presentation/screens/orders_screen.dart';
@@ -18,7 +20,9 @@ import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/home/presentation/screens/medicine_detail_screen.dart';
 
 class CarePharmacyApp extends StatelessWidget {
-  const CarePharmacyApp({super.key});
+  const CarePharmacyApp({super.key, required this.navigatorKey});
+
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +39,7 @@ class CarePharmacyApp extends StatelessWidget {
           return MaterialApp(
             title: 'Care Pharmacy',
             debugShowCheckedModeBanner: false,
+            navigatorKey: navigatorKey,
             theme: AppTheme.lightTheme,
             onGenerateRoute: (settings) {
               switch (settings.name) {
@@ -46,6 +51,10 @@ class CarePharmacyApp extends StatelessWidget {
                   return _pageRoute(const ProfileScreen());
                 case AppRoutes.paymentDetails:
                   return _pageRoute(const PaymentDetailsScreen());
+                case AppRoutes.forgotPassword:
+                  return _pageRoute(const ForgotPasswordScreen());
+                case AppRoutes.resetPassword:
+                  return _pageRoute(const ResetPasswordScreen());
                 case AppRoutes.medicineDetail:
                   final args = settings.arguments as MedicineDetailArgs;
                   return _pageRoute(

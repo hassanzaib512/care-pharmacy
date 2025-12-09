@@ -39,7 +39,15 @@ class AuthApiService {
         if (token != null) _client.updateToken(token);
         return (user, token);
       }
-      return (null, null);
+      final decoded = _decode(res.body);
+      String? message;
+      if (decoded is Map<String, dynamic>) {
+        if (decoded['message'] is String) message = decoded['message'] as String;
+        if (message == null && decoded['error'] is String) message = decoded['error'] as String;
+      } else if (decoded is String) {
+        message = decoded;
+      }
+      return (null, message);
     } catch (_) {
       return (null, null);
     }
@@ -104,6 +112,51 @@ class AuthApiService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    try {
+      final res = await _client.post('/auth/request-password-reset', body: {'email': email});
+      return res.statusCode >= 200 && res.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final res = await _client.post(
+        '/auth/reset-password',
+        body: {'email': email, 'token': token, 'newPassword': newPassword},
+      );
+      return res.statusCode >= 200 && res.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    try {
+      final res = await _client.post(
+        '/auth/change-password',
+        body: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'confirmNewPassword': confirmNewPassword,
+        },
+      );
+      return res.statusCode >= 200 && res.statusCode < 300;
+    } catch (_) {
+      return false;
     }
   }
 }

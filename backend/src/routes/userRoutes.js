@@ -5,6 +5,8 @@ const {
   updateAddress,
   updatePaymentMethod,
   uploadAvatar,
+  saveDeviceToken,
+  removeDeviceToken,
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
 const upload = require('../utils/upload');
@@ -93,6 +95,22 @@ router.put(
     body('brand').notEmpty().withMessage('Brand required'),
   ],
   updatePaymentMethod
+);
+
+// POST /api/users/me/device-token
+router.post(
+  '/me/device-token',
+  protect,
+  [body('token').notEmpty().withMessage('token is required'), body('platform').optional().isString()],
+  saveDeviceToken
+);
+
+// DELETE /api/users/me/device-token
+router.delete(
+  '/me/device-token',
+  protect,
+  [body('token').notEmpty().withMessage('token is required')],
+  removeDeviceToken
 );
 
 // PUT /api/users/me/avatar

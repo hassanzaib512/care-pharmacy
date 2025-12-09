@@ -2,6 +2,7 @@
 
 import { CssBaseline, ThemeProvider, StyledEngineProvider, createTheme } from "@mui/material";
 import type { ReactNode } from "react";
+import EmotionCacheProvider from "./emotionCache";
 
 // Align with Care Pharmacy Flutter primary blue
 const theme = createTheme({
@@ -37,11 +38,13 @@ const theme = createTheme({
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <StyledEngineProvider injectFirst>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </StyledEngineProvider>
+    <EmotionCacheProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </StyledEngineProvider>
+    </EmotionCacheProvider>
   );
 }

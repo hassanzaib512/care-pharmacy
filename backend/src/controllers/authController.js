@@ -1,8 +1,10 @@
 const asyncHandler = require('express-async-handler');
 const { validationResult } = require('express-validator');
 const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const { sendForgotPasswordEmail, sendWelcomeEmail } = require('../services/emailService');
 
 const googleClient = process.env.GOOGLE_CLIENT_ID
   ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
@@ -22,8 +24,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
-    res.status(400);
-    throw new Error('User already exists');
+    return res
+      .status(409)
+      .json({ errorCode: 'EMAIL_ALREADY_EXISTS', message: 'An account with this email already exists.' });
   }
 
   let user;
@@ -35,11 +38,14 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   } catch (err) {
     if (err.code === 11000) {
-      res.status(400);
-      throw new Error('User already exists');
+      return res
+        .status(409)
+        .json({ errorCode: 'EMAIL_ALREADY_EXISTS', message: 'An account with this email already exists.' });
     }
     throw err;
   }
+
+  sendWelcomeEmail(user).catch((err) => console.error('Failed to send welcome email', err));
 
   res.status(201).json({
     token: generateToken(user._id),
@@ -149,4 +155,80 @@ const googleAuth = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { registerUser, loginUser, getMe, googleAuth };
+// @desc Request password reset
+// @route POST /api/auth/request-password-reset
+// @access Public
+const requestPasswordReset = asyncHandler(async (req, res) => {
+  const { email } = req.body || {};
+  const normalizedEmail = (email || '').toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  const token = crypto.randomBytes(20).toString('hex');
+  const expires = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+  if (user) {
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(expires);
+    await user.save({ validateModifiedOnly: true });
+    sendForgotPasswordEmail(user, token).catch((err) =>
+      console.error('Failed to send forgot password email', err)
+    );
+  }
+
+  res.json({ message: 'If an account exists, a reset link has been sent' });
+});
+
+// @desc Reset password
+// @route POST /api/auth/reset-password
+// @access Public
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, token, newPassword } = req.body || {};
+  if (!email || !token || !newPassword) {
+    res.status(400);
+    throw new Error('Missing required fields');
+  }
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await User.findOne({
+    email: normalizedEmail,
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+  if (!user) {
+    res.status(400);
+    throw new Error('Invalid or expired token');
+  }
+  user.password = newPassword;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+  res.json({ message: 'Password has been reset successfully' });
+});
+
+// @desc Change password (authenticated)
+// @route POST /api/auth/change-password
+// @access Private
+const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword, confirmNewPassword } = req.body || {};
+  if (!currentPassword || !newPassword || !confirmNewPassword) {
+    res.status(400);
+    throw new Error('All fields are required');
+  }
+  if (newPassword !== confirmNewPassword) {
+    res.status(400);
+    throw new Error('New passwords do not match');
+  }
+  if (newPassword.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters');
+  }
+  const user = await User.findById(req.user._id);
+  if (!user || !(await user.matchPassword(currentPassword))) {
+    res.status(400);
+    throw new Error('Current password is incorrect');
+  }
+  user.password = newPassword;
+  await user.save();
+  res.json({ message: 'Password updated successfully' });
+});
+
+module.exports = { registerUser, loginUser, getMe, googleAuth, requestPasswordReset, resetPassword, changePassword };

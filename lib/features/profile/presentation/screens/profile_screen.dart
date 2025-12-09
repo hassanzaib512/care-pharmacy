@@ -9,8 +9,10 @@ import '../../../../core/providers/profile_provider.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/utils/snackbar.dart';
 import '../../../common/presentation/widgets/app_drawer.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -163,9 +165,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 phone: _phoneController.text.trim(),
                 address: _addressController.text.trim(),
               );
-              ScaffoldMessenger.of(
+              showCartAwareSnackBar(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('Profile updated')));
+                message: 'Profile updated',
+              );
             },
             icon: Icons.check_circle_outline,
           ),
@@ -194,6 +197,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             isOutlined: true,
             icon: Icons.edit_outlined,
           ),
+          const SizedBox(height: 12),
+          PrimaryButton(
+            label: 'Change Password',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+              );
+            },
+            isOutlined: true,
+            icon: Icons.lock_reset,
+          ),
         ],
       ),
     );
@@ -201,7 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickAvatar(BuildContext context) async {
     final provider = context.read<ProfileProvider>();
-    final messenger = ScaffoldMessenger.of(context);
 
     final picker = ImagePicker();
     final file = await picker.pickImage(
@@ -217,11 +230,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
 
     setState(() => _uploading = false);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'Profile photo updated' : 'Failed to upload photo'),
-        backgroundColor: ok ? Colors.green : Colors.redAccent,
-      ),
+    showCartAwareSnackBar(
+      context,
+      message: ok ? 'Profile photo updated' : 'Failed to upload photo',
+      isError: !ok,
     );
   }
 

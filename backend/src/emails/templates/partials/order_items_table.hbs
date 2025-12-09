@@ -1,0 +1,28 @@
+<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse; margin:16px 0 20px 0;">
+  <thead>
+    <tr>
+      <th align="left" style="padding:8px 12px; font-family: Arial, sans-serif; font-size:13px; font-weight:600; color:#555555; background-color:#f3f4ff; border-bottom:1px solid #e2e2e2;">Item</th>
+      <th align="right" style="padding:8px 12px; font-family: Arial, sans-serif; font-size:13px; font-weight:600; color:#555555; background-color:#f3f4ff; border-bottom:1px solid #e2e2e2;">Qty</th>
+      <th align="right" style="padding:8px 12px; font-family: Arial, sans-serif; font-size:13px; font-weight:600; color:#555555; background-color:#f3f4ff; border-bottom:1px solid #e2e2e2;">Unit</th>
+      <th align="right" style="padding:8px 12px; font-family: Arial, sans-serif; font-size:13px; font-weight:600; color:#555555; background-color:#f3f4ff; border-bottom:1px solid #e2e2e2;">Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each order.items}}
+    <tr>
+      <td align="left" style="padding:10px 12px; font-family: Arial, sans-serif; font-size:13px; color:#333333; border-bottom:1px solid #f0f0f0;">{{name}}</td>
+      <td align="right" style="padding:10px 12px; font-family: Arial, sans-serif; font-size:13px; color:#333333; border-bottom:1px solid #f0f0f0;">{{quantity}}</td>
+      <td align="right" style="padding:10px 12px; font-family: Arial, sans-serif; font-size:13px; color:#333333; border-bottom:1px solid #f0f0f0;">{{formatCurrency unitPrice}}</td>
+      <td align="right" style="padding:10px 12px; font-family: Arial, sans-serif; font-size:13px; color:#111827; font-weight:700; border-bottom:1px solid #f0f0f0;">{{formatCurrency total}}</td>
+    </tr>
+    {{/each}}
+    <tr>
+      <td colspan="3" align="right" style="padding:10px 12px; font-family: Arial, sans-serif; font-size:13px; color:#333333; font-weight:700;">Subtotal</td>
+      <td align="right" style="padding:10px 12px; font-family: Arial, sans-serif; font-size:13px; color:#111827; font-weight:800;">{{formatCurrency order.subtotal}}</td>
+    </tr>
+    <tr>
+      <td colspan="3" align="right" style="padding:8px 12px; font-family: Arial, sans-serif; font-size:13px; color:#333333; font-weight:700;">Total</td>
+      <td align="right" style="padding:8px 12px; font-family: Arial, sans-serif; font-size:14px; color:#1f7aff; font-weight:800;">{{formatCurrency order.totalAmount}}</td>
+    </tr>
+  </tbody>
+</table>

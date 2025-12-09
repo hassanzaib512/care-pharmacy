@@ -88,12 +88,13 @@ class AppDrawer extends StatelessWidget {
                   side: BorderSide(color: Colors.red.shade200),
                   minimumSize: const Size.fromHeight(48),
                 ),
-                onPressed: () {
-                  context.read<CartProvider>().clear();
-                  context.read<AuthProvider>().logout();
-                  Navigator.of(
-                    context,
-                  ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final cart = context.read<CartProvider>();
+                  cart.clear();
+                  await context.read<AuthProvider>().logout();
+                  if (!navigator.mounted) return;
+                  navigator.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
                 },
               ),
             ),

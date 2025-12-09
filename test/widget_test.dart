@@ -6,11 +6,12 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:care_pharmacy/app.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('App renders login screen by default', (tester) async {
-    await tester.pumpWidget(const CarePharmacyApp());
+    await tester.pumpWidget(CarePharmacyApp(navigatorKey: GlobalKey<NavigatorState>()));
 
     expect(find.text('Care Pharmacy'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);

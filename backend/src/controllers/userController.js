@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const DeviceToken = require('../models/DeviceToken');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
@@ -124,9 +125,57 @@ const uploadAvatar = asyncHandler(async (req, res) => {
   res.json({ data: updated });
 });
 
+// @desc    Register or update device token
+// @route   POST /api/users/me/device-token
+// @access  Private
+const saveDeviceToken = asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { token, platform } = req.body || {};
+  const normalizedPlatform = ['android', 'ios', 'web'].includes((platform || '').toLowerCase())
+    ? platform.toLowerCase()
+    : 'unknown';
+
+  const saved = await DeviceToken.findOneAndUpdate(
+    { user: req.user._id, token },
+    { user: req.user._id, token, platform: normalizedPlatform, isActive: true },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  // Mark the same token as inactive for other users (if any) to avoid cross-user delivery
+  await DeviceToken.updateMany(
+    { token, user: { $ne: req.user._id } },
+    { $set: { isActive: false } }
+  );
+
+  res.json({ data: { token: saved.token, platform: saved.platform } });
+});
+
+// @desc    Remove a device token
+// @route   DELETE /api/users/me/device-token
+// @access  Private
+const removeDeviceToken = asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { token } = req.body || {};
+
+  await DeviceToken.updateMany(
+    { user: req.user._id, token },
+    { $set: { isActive: false } }
+  );
+
+  res.json({ message: 'Device token removed' });
+});
+
 module.exports = {
   getCurrentUser,
   updateAddress,
   updatePaymentMethod,
   uploadAvatar,
+  saveDeviceToken,
+  removeDeviceToken,
 };

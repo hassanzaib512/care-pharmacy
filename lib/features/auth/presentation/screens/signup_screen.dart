@@ -22,6 +22,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _passwordObscured = true;
+  bool _confirmObscured = true;
+  String? _inlineError;
 
   @override
   void dispose() {
@@ -120,6 +123,11 @@ class _SignupScreenState extends State<SignupScreen> {
             hint: 'At least 6 characters',
             icon: Icons.lock_outline,
             obscureText: true,
+            showVisibilityToggle: true,
+            isObscured: _passwordObscured,
+            onToggleVisibility: () {
+              setState(() => _passwordObscured = !_passwordObscured);
+            },
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Password is required';
@@ -137,6 +145,11 @@ class _SignupScreenState extends State<SignupScreen> {
             hint: 'Re-enter password',
             icon: Icons.lock_reset_outlined,
             obscureText: true,
+            showVisibilityToggle: true,
+            isObscured: _confirmObscured,
+            onToggleVisibility: () {
+              setState(() => _confirmObscured = !_confirmObscured);
+            },
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Confirm your password';
@@ -147,6 +160,16 @@ class _SignupScreenState extends State<SignupScreen> {
               return null;
             },
           ),
+          if (_inlineError != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _inlineError!,
+                style: TextStyle(color: Colors.red.shade700),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -160,13 +183,14 @@ class _SignupScreenState extends State<SignupScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final auth = context.read<AuthProvider>();
-    final navigator = Navigator.of(context); // capture to avoid context after await
-    final profile = context.read<ProfileProvider>();
-    final cart = context.read<CartProvider>();
 
     final success = await auth.signup(name, email, password);
     if (!mounted) return;
     if (success) {
+      setState(() => _inlineError = null);
+      final profile = context.read<ProfileProvider>();
+      final cart = context.read<CartProvider>();
+      final navigator = Navigator.of(context);
       profile.updateProfile(
         email: email.toLowerCase().trim(),
         name: name,
@@ -176,9 +200,16 @@ class _SignupScreenState extends State<SignupScreen> {
       cart.clear();
       navigator.pushReplacementNamed(AppRoutes.home);
     } else {
+      if (!mounted) return;
+      final errorBody = auth.lastSignupError;
+      String message = 'Signup failed. Please try again.';
+      if (errorBody != null && errorBody.toString().toLowerCase().contains('already exists')) {
+        message = 'An account with this email already exists. Please log in or use a different email.';
+      }
+      setState(() => _inlineError = message);
       showCartAwareSnackBar(
         context,
-        message: 'Signup failed. Please try again.',
+        message: message,
         isError: true,
       );
     }

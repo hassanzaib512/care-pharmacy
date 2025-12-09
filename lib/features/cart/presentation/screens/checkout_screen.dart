@@ -115,51 +115,73 @@ class CheckoutScreen extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
-            PrimaryButton(
-              label: 'Place Order',
-              onPressed: orders.loading
-                  ? null
-                  : () async {
-                      final navigator = Navigator.of(context, rootNavigator: true);
-                      final items = cart.items
-                          .where((e) => e.medicine.id.isNotEmpty)
-                          .map((e) => {
-                                'medicine': e.medicine.id,
-                                'quantity': e.quantity,
-                              })
-                          .toList();
-                      if (items.isEmpty) {
-                        showCartAwareSnackBar(
-                          context,
-                          message: 'Cannot place order: missing medicine IDs.',
-                          isError: true,
-                        );
-                        return;
-                      }
-                      orders.updateToken(auth.token);
-                      final result = await orders.placeOrder(items);
-                      if (!context.mounted) return;
-                      showCartAwareSnackBar(
-                        context,
-                        message: result.message,
-                        isError: !result.success,
-                        actionLabel: result.success ? 'View' : null,
-                        onAction: result.success
-                            ? () {
-                                navigator.popUntil((route) => route.isFirst);
-                                navigator.pushNamed(AppRoutes.orders);
-                              }
-                            : null,
-                      );
-                      if (result.success) {
-                        cart.clear();
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      }
-                    },
-            ),
+            _PlaceOrderButton(),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PlaceOrderButton extends StatefulWidget {
+  @override
+  State<_PlaceOrderButton> createState() => _PlaceOrderButtonState();
+}
+
+class _PlaceOrderButtonState extends State<_PlaceOrderButton> {
+  bool _submitting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final orders = context.watch<OrderProvider>();
+    final cart = context.watch<CartProvider>();
+    final auth = context.watch<AuthProvider>();
+    final navigator = Navigator.of(context, rootNavigator: true);
+
+    return PrimaryButton(
+      label: 'Place Order',
+      isLoading: _submitting || orders.loading,
+      onPressed: _submitting
+          ? null
+          : () async {
+              final items = cart.items
+                  .where((e) => e.medicine.id.isNotEmpty)
+                  .map((e) => {
+                        'medicine': e.medicine.id,
+                        'quantity': e.quantity,
+                      })
+                  .toList();
+              if (items.isEmpty) {
+                showCartAwareSnackBar(
+                  context,
+                  message: 'Cannot place order: missing medicine IDs.',
+                  isError: true,
+                );
+                return;
+              }
+              setState(() => _submitting = true);
+              orders.updateToken(auth.token);
+              final result = await orders.placeOrder(items);
+              if (!mounted) return;
+              showCartAwareSnackBar(
+                context,
+                message: result.message,
+                isError: !result.success,
+                actionLabel: result.success ? 'View' : null,
+                onAction: result.success
+                    ? () {
+                        navigator.popUntil((route) => route.isFirst);
+                        navigator.pushNamed(AppRoutes.orders);
+                      }
+                    : null,
+                duration: const Duration(seconds: 5),
+              );
+              if (result.success) {
+                cart.clear();
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+              if (mounted) setState(() => _submitting = false);
+            },
     );
   }
 }

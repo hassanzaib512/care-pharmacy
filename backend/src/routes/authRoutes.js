@@ -1,6 +1,14 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { registerUser, loginUser, getMe, googleAuth } = require('../controllers/authController');
+const {
+  registerUser,
+  loginUser,
+  getMe,
+  googleAuth,
+  requestPasswordReset,
+  resetPassword,
+  changePassword,
+} = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -114,6 +122,33 @@ router.post(
   '/google',
   [body('idToken').notEmpty().withMessage('Google idToken required')],
   googleAuth
+);
+
+router.post(
+  '/request-password-reset',
+  [body('email').isEmail().withMessage('Valid email required')],
+  requestPasswordReset
+);
+
+router.post(
+  '/reset-password',
+  [
+    body('email').isEmail().withMessage('Valid email required'),
+    body('token').notEmpty().withMessage('Token required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('Password min 6 chars'),
+  ],
+  resetPassword
+);
+
+router.post(
+  '/change-password',
+  protect,
+  [
+    body('currentPassword').notEmpty().withMessage('Current password required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('Password min 6 chars'),
+    body('confirmNewPassword').notEmpty().withMessage('Confirm password required'),
+  ],
+  changePassword
 );
 
 module.exports = router;

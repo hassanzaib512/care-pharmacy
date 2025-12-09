@@ -8,6 +8,11 @@ const generateToken = require('../utils/generateToken');
 const uploadMedicine = require('../utils/uploadMedicine');
 const fs = require('fs');
 const path = require('path');
+const { sendOrderDeliveredNotificationToUser } = require('../services/notificationService');
+const {
+  sendOrderDeliveredUserEmail,
+  sendOrderDeliveredAdminEmail,
+} = require('../services/emailService');
 
 const getPublicBase = (req) => {
   const envBase = process.env.PUBLIC_BASE_URL || process.env.ASSET_BASE_URL || process.env.APP_BASE_URL;
@@ -203,9 +208,28 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Order not found');
   }
+  const wasDelivered = order.status?.toLowerCase() === 'delivered';
   if (status) order.status = status;
   if (deliveryStatus) order.deliveryStatus = deliveryStatus;
+  if (status && status.toLowerCase() === 'delivered' && !order.deliveredAt) {
+    order.deliveredAt = new Date();
+  }
   await order.save();
+  const isDeliveredNow = order.status?.toLowerCase() === 'delivered';
+  if (isDeliveredNow && !wasDelivered) {
+    try {
+      const populatedOrder = await Order.findById(order._id)
+        .populate('items.medicine', 'name price manufacturer')
+        .populate('user', 'name email address');
+      await sendOrderDeliveredNotificationToUser(populatedOrder.user?._id || populatedOrder.user, populatedOrder);
+      await Promise.all([
+        sendOrderDeliveredUserEmail(populatedOrder.user, populatedOrder),
+        sendOrderDeliveredAdminEmail(populatedOrder),
+      ]);
+    } catch (err) {
+      console.error('Failed to dispatch delivered notification', err);
+    }
+  }
   res.json({ data: order });
 });
 
@@ -221,10 +245,23 @@ const markOrderDelivered = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Order is already delivered');
   }
+  const userId = order.user;
   order.status = 'delivered';
   order.deliveryStatus = 'Delivered';
   order.deliveredAt = new Date();
   await order.save();
+  try {
+    const populatedOrder = await Order.findById(order._id)
+      .populate('items.medicine', 'name price manufacturer')
+      .populate('user', 'name email address');
+    await sendOrderDeliveredNotificationToUser(userId, populatedOrder);
+    await Promise.all([
+      sendOrderDeliveredUserEmail(populatedOrder.user, populatedOrder),
+      sendOrderDeliveredAdminEmail(populatedOrder),
+    ]);
+  } catch (err) {
+    console.error('Failed to send delivery notification', err);
+  }
   res.json({ data: order });
 });
 
