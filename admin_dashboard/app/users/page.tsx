@@ -127,14 +127,9 @@ export default function UsersPage() {
             Users Management
           </Typography>
 
-          <Card sx={{ mb: 2, maxWidth: 520, mx: "auto" }}>
+          <Card sx={{ mb: 2, maxWidth: 760, mx: "auto" }}>
             <CardContent>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                alignItems="flex-start"
-                sx={{ flexWrap: "wrap" }}
-              >
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems="center" justifyContent="center" sx={{ flexWrap: "wrap" }}>
                 <TextField
                   size="small"
                   placeholder="Search by name, email, or address"
@@ -150,7 +145,7 @@ export default function UsersPage() {
                       </InputAdornment>
                     ),
                   }}
-                  fullWidth
+                  sx={{ flex: 1, minWidth: { xs: "100%", sm: 240 }, maxWidth: { sm: 360 } }}
                 />
                 <FormControl size="small" sx={{ minWidth: 140 }}>
                   <InputLabel id="user-page-size">Page size</InputLabel>

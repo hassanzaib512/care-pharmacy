@@ -149,12 +149,13 @@ export default function OrdersPage() {
           <Typography variant="h4" fontWeight={800} gutterBottom color="primary">
             Orders Management
           </Typography>
-          <Card sx={{ mb: 2 }}>
+          <Card sx={{ mb: 2, maxWidth: 760, mx: "auto" }}>
             <CardContent>
               <Stack
                 direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                alignItems="flex-start"
+                spacing={1.5}
+                alignItems="center"
+                justifyContent="center"
                 sx={{ flexWrap: "wrap" }}
               >
                 <TextField
@@ -169,7 +170,7 @@ export default function OrdersPage() {
                       </InputAdornment>
                     ),
                   }}
-                  fullWidth
+                  sx={{ flex: 1, minWidth: { xs: "100%", sm: 240 }, maxWidth: { sm: 360 } }}
                 />
                 <FormControl size="small" sx={{ minWidth: 180 }}>
                   <InputLabel id="status-filter">Status</InputLabel>
