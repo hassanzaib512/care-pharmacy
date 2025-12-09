@@ -1,0 +1,79 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (uncomment if you want to ignore)
+# .vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/build/
+coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android build artifacts
+android/app/debug
+android/app/profile
+android/app/release
+
+# Node modules
+backend/node_modules/
+admin_dashboard/node_modules/
+
+# Backend uploads
+backend/uploads/
+
+# Next.js admin dashboard
+admin_dashboard/.next/
+admin_dashboard/out/
+admin_dashboard/.env
+admin_dashboard/.env.local
+admin_dashboard/.env.development
+admin_dashboard/.env.production
+admin_dashboard/.env.test
+
+# Backend additional ignores
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.production
+backend/.env.test
+backend/logs/
+backend/tmp/
+backend/.cache/
+
+# Node lockfiles (optional)
+admin_dashboard/package-lock.json
+admin_dashboard/yarn.lock
+admin_dashboard/pnpm-lock.yaml
+backend/pnpm-lock.yaml
+backend/yarn.lock
+
+# Flutter lockfile (optional – ignore only if you really want)
+# pubspec.lock

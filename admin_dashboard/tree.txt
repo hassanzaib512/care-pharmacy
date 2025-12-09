@@ -1,0 +1,33 @@
+.
+├── app
+│   ├── (auth)
+│   │   └── login
+│   │       └── page.tsx
+│   ├── components
+│   │   ├── HeaderBar.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── StatCard.tsx
+│   │   └── StatusChip.tsx
+│   ├── dashboard
+│   │   └── page.tsx
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── lib
+│   │   └── api.ts
+│   ├── page.tsx
+│   └── providers.tsx
+├── eslint.config.mjs
+├── next.config.ts
+├── next-env.d.ts
+├── package.json
+├── package-lock.json
+├── postcss.config.mjs
+├── public
+│   ├── app_logo.png
+│   └── care_pharmacy_logo.ico
+├── README.md
+├── tree.txt
+└── tsconfig.json
+
+8 directories, 23 files
