@@ -74,7 +74,7 @@ class AuthProvider extends ChangeNotifier {
         await _authApi.register(name: name, email: email, password: password);
     final user = result.$1;
     final tokenOrError = result.$2;
-    if (user != null && tokenOrError != null && tokenOrError is String) {
+    if (user != null && tokenOrError != null) {
       _token = tokenOrError;
       _client.updateToken(tokenOrError);
       _currentUser = user;

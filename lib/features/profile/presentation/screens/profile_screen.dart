@@ -222,12 +222,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       imageQuality: 80,
     );
 
-    if (!mounted || file == null) return;
+    if (!context.mounted || file == null) return;
 
     setState(() => _uploading = true);
     final ok = await provider.uploadAvatar(file.path);
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     setState(() => _uploading = false);
     showCartAwareSnackBar(

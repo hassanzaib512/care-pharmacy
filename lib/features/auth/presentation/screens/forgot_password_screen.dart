@@ -63,9 +63,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid) return;
     setState(() => _loading = true);
-    final ok = await context.read<AuthProvider>().api.requestPasswordReset(
-          _emailController.text.trim(),
-        );
+    await context.read<AuthProvider>().api.requestPasswordReset(
+      _emailController.text.trim(),
+    );
     if (!mounted) return;
     setState(() => _loading = false);
     showCartAwareSnackBar(

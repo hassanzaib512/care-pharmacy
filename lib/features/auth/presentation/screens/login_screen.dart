@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthProvider>();
 
     final success = await auth.login(email, password);
-    if (!mounted) return;
+    if (!context.mounted) return;
     if (!success) {
       setState(() => _showError = true);
       return;
@@ -197,8 +197,8 @@ class _LoginScreenState extends State<LoginScreen> {
     // Sync profile provider token and fetch profile
     profile.updateToken(auth.token);
     await profile.fetchProfile();
+    if (!context.mounted) return;
     cart.clear();
-    if (!mounted) return;
     navigator.pushReplacementNamed(AppRoutes.home);
   }
 
@@ -207,21 +207,21 @@ class _LoginScreenState extends State<LoginScreen> {
     final cart = context.read<CartProvider>();
     final profile = context.read<ProfileProvider>();
     final idToken = await GoogleAuthHelper.signInAndGetIdToken();
+    if (!context.mounted) return;
     if (idToken == null) {
-      if (!mounted) return;
       showCartAwareSnackBar(context, message: 'Google sign-in failed', isError: true);
       return;
     }
     final success = await auth.loginWithGoogle(idToken);
-    if (!mounted) return;
+    if (!context.mounted) return;
     if (!success) {
       showCartAwareSnackBar(context, message: 'Google login failed', isError: true);
       return;
     }
     profile.updateToken(auth.token);
     await profile.fetchProfile();
+    if (!context.mounted) return;
     cart.clear();
-    if (!mounted) return;
     final navigator = Navigator.of(context);
     navigator.pushReplacementNamed(AppRoutes.home);
   }

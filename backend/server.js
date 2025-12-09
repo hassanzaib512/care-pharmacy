@@ -13,7 +13,7 @@ const authRoutes = require('./src/routes/authRoutes');
 const medicineRoutes = require('./src/routes/medicineRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
-const reviewRoutes = require('./src/routes/reviewRoutes');
+const { reviewRouter, medicineReviewRouter } = require('./src/routes/reviewRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const { getSeason } = require('./src/controllers/seasonController');
 const swaggerSpec = require('./src/swagger');
@@ -80,7 +80,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/medicines/:id/reviews', reviewRoutes);
+app.use('/api/reviews', reviewRouter);
+app.use('/api/medicines/:medicineId/reviews', medicineReviewRouter);
+app.use('/api/medicines/:id/reviews', medicineReviewRouter);
 app.use('/api/admin', adminRoutes);
 app.use(
   '/uploads',

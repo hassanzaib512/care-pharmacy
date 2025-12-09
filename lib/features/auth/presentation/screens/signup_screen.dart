@@ -185,7 +185,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final auth = context.read<AuthProvider>();
 
     final success = await auth.signup(name, email, password);
-    if (!mounted) return;
+    if (!context.mounted) return;
     if (success) {
       setState(() => _inlineError = null);
       final profile = context.read<ProfileProvider>();
@@ -200,7 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
       cart.clear();
       navigator.pushReplacementNamed(AppRoutes.home);
     } else {
-      if (!mounted) return;
+      if (!context.mounted) return;
       final errorBody = auth.lastSignupError;
       String message = 'Signup failed. Please try again.';
       if (errorBody != null && errorBody.toString().toLowerCase().contains('already exists')) {

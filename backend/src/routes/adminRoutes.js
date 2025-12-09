@@ -23,6 +23,7 @@ const {
   deleteConfig,
   getMedicineDetailAdmin,
 } = require('../controllers/adminController');
+const { listReviews } = require('../controllers/reviewController');
 const { protect, requireRole } = require('../middleware/auth');
 const { updateSeasons } = require('../controllers/seasonController');
 
@@ -90,6 +91,20 @@ router.get(
     query('month').optional().isInt({ min: 1, max: 12 }).withMessage('month must be 1-12'),
   ],
   getTopMedicines
+);
+
+// Reviews
+router.get(
+  '/reviews',
+  [
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 200 }),
+    query('search').optional().isString(),
+    query('rating').optional().isInt({ min: 1, max: 5 }),
+    query('sortField').optional().isIn(['rating', 'createdAt']),
+    query('sortDirection').optional().isIn(['asc', 'desc']),
+  ],
+  listReviews
 );
 
 // Admin medicine detail

@@ -500,21 +500,17 @@ const getTopMedicines = asyncHandler(async (req, res) => {
 const listMedicines = asyncHandler(async (req, res) => {
   const {
     search,
-    composition,
     manufacturer,
     category,
     sortBy,
     sortDir,
+    rating,
   } = req.query;
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Number(req.query.limit) || 20, 200);
 
   const query = {};
   const hasSearch = search && typeof search === 'string' && search.trim().length >= 3;
-  if (composition && composition.toString().trim().length >= 3) {
-    const regex = new RegExp(composition.toString().trim(), 'i');
-    query.composition = { $elemMatch: { $regex: regex } };
-  }
   if (manufacturer && manufacturer.toString().trim().length >= 3) {
     const regex = new RegExp(manufacturer.toString().trim(), 'i');
     query.manufacturer = { $regex: regex };
@@ -523,12 +519,20 @@ const listMedicines = asyncHandler(async (req, res) => {
     const regex = new RegExp(category.toString().trim(), 'i');
     query.category = { $regex: regex };
   }
+  const minRating = Number(rating);
+  if (Number.isFinite(minRating) && minRating >= 1 && minRating <= 5) {
+    query.rating = { $gte: minRating };
+  }
   if (hasSearch) {
     const regex = new RegExp(search.trim(), 'i');
-    query.$or = [{ name: regex }, { manufacturer: regex }];
+    query.$or = [
+      { name: regex },
+      { manufacturer: regex },
+      { composition: { $elemMatch: { $regex: regex } } },
+    ];
   }
 
-  const sortField = sortBy === 'price' ? 'price' : 'name';
+  const sortField = sortBy === 'price' ? 'price' : sortBy === 'rating' ? 'rating' : 'name';
   const sortOrder = sortDir === 'desc' ? -1 : 1;
 
   const [items, totalItems] = await Promise.all([

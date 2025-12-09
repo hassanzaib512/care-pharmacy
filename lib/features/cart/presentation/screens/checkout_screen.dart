@@ -15,8 +15,6 @@ class CheckoutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final theme = Theme.of(context);
-    final orders = context.watch<OrderProvider>();
-    final auth = context.read<AuthProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),
@@ -162,7 +160,7 @@ class _PlaceOrderButtonState extends State<_PlaceOrderButton> {
               setState(() => _submitting = true);
               orders.updateToken(auth.token);
               final result = await orders.placeOrder(items);
-              if (!mounted) return;
+              if (!context.mounted) return;
               showCartAwareSnackBar(
                 context,
                 message: result.message,

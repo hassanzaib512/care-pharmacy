@@ -18,6 +18,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import PeopleIcon from "@mui/icons-material/People";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -26,6 +27,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: <DashboardIcon /> },
   { label: "Orders", href: "/orders", icon: <ReceiptLongIcon /> },
+  { label: "Reviews", href: "/reviews", icon: <RateReviewIcon /> },
   { label: "Users", href: "/users", icon: <PeopleIcon /> },
   { label: "Medicines", href: "/medicines", icon: <MedicalServicesIcon /> },
   { label: "Config", href: "/config", icon: <SettingsIcon /> },

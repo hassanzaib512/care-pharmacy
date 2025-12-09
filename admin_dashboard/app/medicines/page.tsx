@@ -41,6 +41,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import { useMemo, useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import HeaderBar from "../components/HeaderBar";
@@ -77,8 +78,8 @@ const formatCurrency = (v?: number) => `$${Number(v || 0).toFixed(2)}`;
 
 export default function MedicinesPage() {
   const [search, setSearch] = useState("");
-  const [composition, setComposition] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "price">("name");
+  const [minRating, setMinRating] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"name" | "price" | "rating">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -99,9 +100,9 @@ export default function MedicinesPage() {
     params.set("sortBy", sortBy);
     params.set("sortDir", sortDir);
     if (search.trim().length >= 3) params.set("search", search.trim());
-    if (composition.trim().length >= 3) params.set("composition", composition.trim());
+    if (minRating !== "all") params.set("rating", minRating);
     return `${API_BASE}/medicines?${params.toString()}`;
-  }, [page, limit, sortBy, sortDir, search, composition]);
+  }, [page, limit, sortBy, sortDir, search, minRating]);
 
   const { data, error, isLoading, mutate } = useSWR(listUrl, fetcher);
   const detailUrl = selectedId ? `${API_BASE}/medicines/${selectedId}` : null;
@@ -112,7 +113,7 @@ export default function MedicinesPage() {
   const medicines = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  const handleSort = (field: "name" | "price") => {
+  const handleSort = (field: "name" | "price" | "rating") => {
     setPage(1);
     if (sortBy === field) {
       setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -251,53 +252,70 @@ const handleSave = async (payload: any) => {
           </Typography>
 
           <Card sx={{ mb: 2, maxWidth: 760, mx: "auto" }}>
-            <CardContent sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-              <TextField
-                size="small"
-                placeholder="Search by name or manufacturer"
-                value={search}
-                onChange={(e) => {
-                  setPage(1);
-                  setSearch(e.target.value);
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ flex: 1, minWidth: { xs: "100%", sm: 320 } }}
-              />
-              <TextField
-                size="small"
-                placeholder="Filter by formulation"
-                value={composition}
-                onChange={(e) => {
-                  setPage(1);
-                  setComposition(e.target.value);
-                }}
-                sx={{ flex: 1, minWidth: { xs: "100%", sm: 240 } }}
-              />
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel id="meds-page-size">Page size</InputLabel>
-                <Select
-                  labelId="meds-page-size"
-                  value={limit}
-                  input={<OutlinedInput label="Page size" />}
+            <CardContent>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                alignItems="center"
+                justifyContent="center"
+                sx={{ flexWrap: "wrap" }}
+              >
+                <TextField
+                  size="small"
+                  placeholder="Search by name or manufacturer"
+                  value={search}
                   onChange={(e) => {
-                    const val = Number(e.target.value) || 10;
-                    setLimit(val);
                     setPage(1);
+                    setSearch(e.target.value);
                   }}
-                >
-                  {[10, 20, 30, 40, 50].map((n) => (
-                    <MenuItem key={n} value={n}>
-                      {n} / page
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ flex: 1, minWidth: { xs: "100%", sm: 260 } }}
+                />
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel id="rating-filter">Rating</InputLabel>
+                  <Select
+                    labelId="rating-filter"
+                    value={minRating}
+                    input={<OutlinedInput label="Rating" />}
+                    onChange={(e) => {
+                      setPage(1);
+                      setMinRating(e.target.value);
+                    }}
+                  >
+                    <MenuItem value="all">All ratings</MenuItem>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <MenuItem key={n} value={String(n)}>
+                        {n}+
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel id="meds-page-size">Page size</InputLabel>
+                  <Select
+                    labelId="meds-page-size"
+                    value={limit}
+                    input={<OutlinedInput label="Page size" />}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 10;
+                      setLimit(val);
+                      setPage(1);
+                    }}
+                  >
+                    {[10, 20, 30, 40, 50].map((n) => (
+                      <MenuItem key={n} value={n}>
+                        {n} / page
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
             </CardContent>
           </Card>
 
@@ -338,6 +356,15 @@ const handleSave = async (payload: any) => {
                       </TableCell>
                       <TableCell>Manufacturer</TableCell>
                       <TableCell>Category</TableCell>
+                      <TableCell sortDirection={sortBy === "rating" ? sortDir : false}>
+                        <TableSortLabel
+                          active={sortBy === "rating"}
+                          direction={sortBy === "rating" ? sortDir : "desc"}
+                          onClick={() => handleSort("rating")}
+                        >
+                          Rating
+                        </TableSortLabel>
+                      </TableCell>
                       <TableCell sortDirection={sortBy === "price" ? sortDir : false}>
                         <TableSortLabel
                           active={sortBy === "price"}
@@ -367,6 +394,31 @@ const handleSave = async (payload: any) => {
                           <TableCell>{m.name}</TableCell>
                           <TableCell>{m.manufacturer || "—"}</TableCell>
                           <TableCell>{m.category || "—"}</TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              <Box sx={{ position: "relative", width: 18, height: 18, display: "inline-flex" }}>
+                                <StarRoundedIcon
+                                  fontSize="small"
+                                  sx={{ position: "absolute", inset: 0, color: "action.disabled" }}
+                                />
+                                <StarRoundedIcon
+                                  fontSize="small"
+                                  sx={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    color: "warning.main",
+                                    clipPath: `inset(0 ${100 - Math.max(0, Math.min(5, Number(m.rating || 0))) * 20}% 0 0)`,
+                                  }}
+                                />
+                              </Box>
+                              <Typography variant="body2">
+                                {Number(m.rating || 0).toFixed(1)}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                ({m.reviewsCount || 0})
+                              </Typography>
+                            </Stack>
+                          </TableCell>
                           <TableCell>{formatCurrency(m.price)}</TableCell>
                           <TableCell align="center">
                             <Chip
@@ -391,7 +443,7 @@ const handleSave = async (payload: any) => {
                     })}
                     {medicines.length === 0 && !isLoading && (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
+                        <TableCell colSpan={8} align="center">
                           No medicines found.
                         </TableCell>
                       </TableRow>

@@ -10,23 +10,41 @@ class OrderItem {
     final medRaw = json['medicine'];
     final med = medRaw is Map<String, dynamic>
         ? Medicine.fromJson(medRaw)
-        : Medicine(
-            id: '',
-            name: 'Unknown',
-            category: '',
-            description: '',
-            usage: '',
-            price: 0,
-            isTrending: false,
-            seasons: const [],
-            ingredients: const [],
-            warnings: const [],
-            primaryConditions: const [],
-            imageUrls: const [],
-            reviews: const [],
-            rating: 0,
-            ratingCount: 0,
-          );
+        : medRaw is String
+            ? Medicine(
+                id: medRaw,
+                name: 'Unknown',
+                category: '',
+                description: '',
+                usage: '',
+                price: 0,
+                isTrending: false,
+                seasons: const [],
+                ingredients: const [],
+                warnings: const [],
+                primaryConditions: const [],
+                imageUrls: const [],
+                reviews: const [],
+                rating: 0,
+                ratingCount: 0,
+              )
+            : Medicine(
+                id: '',
+                name: 'Unknown',
+                category: '',
+                description: '',
+                usage: '',
+                price: 0,
+                isTrending: false,
+                seasons: const [],
+                ingredients: const [],
+                warnings: const [],
+                primaryConditions: const [],
+                imageUrls: const [],
+                reviews: const [],
+                rating: 0,
+                ratingCount: 0,
+              );
     return OrderItem(
       medicine: med,
       quantity: json['quantity'] ?? 1,

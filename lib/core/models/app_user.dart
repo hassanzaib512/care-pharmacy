@@ -1,6 +1,7 @@
 import 'payment_method.dart';
 
 class AppUser {
+  final String id;
   final String email;
   final String name;
   final String phone;
@@ -11,6 +12,7 @@ class AppUser {
 
   const AppUser({
     required this.email,
+    this.id = '',
     this.name = '',
     this.phone = '',
     this.address = '',
@@ -21,6 +23,7 @@ class AppUser {
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(
+      id: (json['_id'] ?? json['id'] ?? '').toString(),
       email: json['email'] ?? '',
       name: json['name'] ?? '',
       phone: json['address'] != null ? (json['address']['phone'] ?? '') : (json['phone'] ?? ''),
@@ -49,6 +52,7 @@ class AppUser {
   }
 
   AppUser copyWith({
+    String? id,
     String? name,
     String? phone,
     String? address,
@@ -57,6 +61,7 @@ class AppUser {
     PaymentMethod? defaultPaymentMethod,
   }) {
     return AppUser(
+      id: id ?? this.id,
       email: email,
       name: name ?? this.name,
       phone: phone ?? this.phone,

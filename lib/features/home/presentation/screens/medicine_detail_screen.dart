@@ -33,6 +33,8 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
   late final ApiClient _client;
   late final ReviewApiService _reviewApi;
   bool _loadingReviews = false;
+  late double _averageRating;
+  late int _reviewCount;
   Timer? _autoTimer;
 
   List<String> get _galleryImages {
@@ -65,12 +67,24 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
     _pageController = PageController();
     _currentImageIndex = 0;
     _reviews = List<MedicineReview>.from(widget.medicine.reviews);
+    _averageRating = widget.medicine.rating;
+    _reviewCount = widget.medicine.ratingCount;
     _client = ApiClient();
     _reviewApi = ReviewApiService(_client);
-    Future.microtask(_loadReviews);
+    Future.microtask(() {
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+      final ordersProv = context.read<OrderProvider>();
+      ordersProv.updateToken(auth.token);
+      if (!ordersProv.loading && ordersProv.orders.isEmpty) {
+        ordersProv.fetchOrders();
+      }
+      _loadReviews();
+    });
     if (_images.length > 1) {
       _autoTimer = Timer.periodic(_autoScrollDelay, (timer) {
         if (!mounted) return;
+        if (!_pageController.hasClients) return;
         final nextIndex = (_currentImageIndex + 1) % _images.length;
         _pageController.animateToPage(
           nextIndex,
@@ -88,17 +102,51 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
     super.dispose();
   }
 
-  bool _userCanReview() {
-    final orders = context.read<OrderProvider>().orders;
-    return orders.any((order) {
-      final status = order.status.toLowerCase();
-      final isCompleted = status.contains('delivered') || status.contains('completed');
-      if (!isCompleted) return false;
-      return order.items.any((item) => item.medicine.id == widget.medicine.id);
-    });
+  MedicineReview? _findMyReview() {
+    final auth = context.read<AuthProvider>();
+    final uid = auth.currentUser?.id ?? '';
+    final email = auth.currentUser?.email ?? '';
+    if (uid.isNotEmpty) {
+      try {
+        return _reviews.firstWhere((r) => r.userId == uid);
+      } catch (_) {}
+    }
+    if (email.isNotEmpty) {
+      try {
+        return _reviews.firstWhere((r) => r.userEmail == email);
+      } catch (_) {}
+    }
+    return null;
   }
 
+  String? _eligibleOrderId() {
+    final orders = context.read<OrderProvider>().orders;
+    for (final order in orders) {
+      final status = order.status.toLowerCase();
+      final delivery = order.deliveryStatus.toLowerCase();
+      final isDelivered =
+          status == 'delivered' ||
+          status == 'completed' ||
+          delivery == 'delivered' ||
+          delivery == 'completed';
+      if (!isDelivered) continue;
+      final hasMedicine = order.items.any((item) => item.medicine.id == widget.medicine.id);
+      if (hasMedicine) return order.id;
+    }
+    return null;
+  }
+
+  bool _userCanReview() => _eligibleOrderId() != null;
+
   Widget _buildReviewAction(ThemeData theme) {
+    final myReview = _findMyReview();
+    if (myReview != null) {
+      return OutlinedButton.icon(
+        onPressed: () => _openAddReviewSheet(theme, existing: myReview),
+        icon: const Icon(Icons.edit_outlined),
+        label: const Text('Edit review'),
+      );
+    }
     final canReview = _userCanReview();
     if (canReview) {
       return OutlinedButton.icon(
@@ -113,10 +161,28 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
     );
   }
 
-  Future<void> _openAddReviewSheet(ThemeData theme) async {
-    double tempRating = 4;
-    final commentController = TextEditingController();
-    final navigator = Navigator.of(context);
+  Future<void> _openAddReviewSheet(ThemeData theme, {MedicineReview? existing}) async {
+    final rootNavigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    String? orderId = existing != null ? null : _eligibleOrderId();
+    if (existing == null && orderId == null) {
+      final auth = context.read<AuthProvider>();
+      final ordersProv = context.read<OrderProvider>();
+      ordersProv.updateToken(auth.token);
+      await ordersProv.fetchOrders();
+      if (!context.mounted) return;
+      orderId = _eligibleOrderId();
+    }
+    if (existing == null && orderId == null) {
+      if (!context.mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('You can review only after a delivered order with this medicine.')),
+      );
+      return;
+    }
+    double tempRating = existing?.rating ?? 4;
+    final commentController = TextEditingController(text: existing?.comment ?? '');
+    if (!context.mounted) return;
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -152,16 +218,16 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text('Rating', style: theme.textTheme.bodyMedium),
+                  Text(existing != null ? 'Update rating' : 'Rating', style: theme.textTheme.bodyMedium),
                   Slider(
                     value: tempRating,
                     min: 1,
                     max: 5,
-                    divisions: 8,
-                    label: tempRating.toStringAsFixed(1),
+                    divisions: 4,
+                    label: tempRating.toStringAsFixed(0),
                     onChanged: (val) {
                       setModalState(() {
-                        tempRating = val;
+                        tempRating = val.roundToDouble();
                       });
                     },
                   ),
@@ -179,16 +245,32 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       // Capture navigator before async gap
-                      await _reviewApi.addReview(
-                        medicineId: widget.medicine.id,
-                        rating: tempRating,
-                        comment: commentController.text.trim(),
-                      );
-                      if (!mounted) return;
-                      navigator.pop();
+                      bool ok;
+                      if (existing != null) {
+                        ok = await _reviewApi.updateReview(
+                          reviewId: existing.id,
+                          rating: tempRating,
+                          comment: commentController.text.trim(),
+                        );
+                      } else {
+                        ok = await _reviewApi.addReview(
+                          orderId: orderId!,
+                          medicineId: widget.medicine.id,
+                          rating: tempRating,
+                          comment: commentController.text.trim(),
+                        );
+                      }
+                      if (!context.mounted) return;
+                      if (!ok) {
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Unable to submit review.')),
+                        );
+                        return;
+                      }
+                      rootNavigator.pop();
                       _loadReviews();
                     },
-                    child: const Text('Submit review'),
+                    child: Text(existing != null ? 'Update review' : 'Submit review'),
                   ),
                 ),
                 ],
@@ -204,14 +286,19 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
     final auth = context.read<AuthProvider>();
     _client.updateToken(auth.token);
     setState(() => _loadingReviews = true);
-    final (items, _, _) = await _reviewApi.fetchReviews(widget.medicine.id);
-    if (!mounted) return;
-    if (items.isNotEmpty) {
+    try {
+      final (items, _, _, avg, count) = await _reviewApi.fetchReviews(widget.medicine.id);
+      if (!mounted) return;
       setState(() {
         _reviews = items;
+        _averageRating = avg;
+        _reviewCount = count;
+        _loadingReviews = false;
       });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingReviews = false);
     }
-    setState(() => _loadingReviews = false);
   }
 
   @override
@@ -266,12 +353,12 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                 const Icon(Icons.star, size: 20, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
-                  widget.medicine.rating.toStringAsFixed(1),
+                  _averageRating.toStringAsFixed(1),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '(${widget.medicine.ratingCount})',
+                  '($_reviewCount)',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
@@ -417,6 +504,22 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.star_rounded, size: 18, color: Colors.amber[700]),
+                const SizedBox(width: 6),
+                Text(
+                  _averageRating.toStringAsFixed(1),
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$_reviewCount review${_reviewCount == 1 ? '' : 's'}',
+                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             if (_loadingReviews)

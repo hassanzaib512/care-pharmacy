@@ -80,9 +80,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final navigator = Navigator.of(context);
     orders.updateToken(auth.token);
     final result = await orders.cancelOrder(_order!.id);
+    if (!context.mounted) return;
     if (result.success) {
       final updated = await orders.fetchOrder(_order!.id);
-      if (!mounted) return;
+      if (!context.mounted) return;
       if (updated != null) {
         setState(() => _order = updated);
       }
@@ -91,14 +92,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         message: result.message,
       );
       navigator.pop(); // back to orders listing
-    } else if (mounted) {
+    }
+    if (!context.mounted) return;
+    if (!result.success) {
       showCartAwareSnackBar(
         context,
         message: result.message,
         isError: true,
       );
     }
-    if (mounted) setState(() => _cancelling = false);
+    if (!context.mounted) return;
+    setState(() => _cancelling = false);
   }
 
   Future<void> _refreshFromApi() async {
@@ -107,10 +111,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     orders.updateToken(auth.token);
     setState(() => _loading = true);
     final updated = await orders.fetchOrder(widget.order.id);
-    if (updated != null && mounted) {
+    if (!context.mounted) return;
+    if (updated != null) {
       setState(() => _order = updated);
     }
-    if (mounted) setState(() => _loading = false);
+    setState(() => _loading = false);
   }
 
   @override

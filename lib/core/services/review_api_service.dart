@@ -16,7 +16,7 @@ class ReviewApiService {
     }
   }
 
-  Future<(List<MedicineReview>, int, int)> fetchReviews(
+  Future<(List<MedicineReview>, int, int, double, int)> fetchReviews(
     String medicineId, {
     int page = 1,
     int limit = 10,
@@ -33,27 +33,58 @@ class ReviewApiService {
               .whereType<Map<String, dynamic>>()
               .map(MedicineReview.fromJson)
               .toList();
+          final meta = decoded['meta'] as Map<String, dynamic>? ?? {};
+          final avg = meta['averageRating'];
+          final cnt = meta['reviewCount'];
           return (
             items,
             int.tryParse((decoded['totalPages'] ?? '0').toString()) ?? 1,
             int.tryParse((decoded['totalItems'] ?? '0').toString()) ?? items.length,
+            avg is num ? avg.toDouble() : 0.0,
+            cnt is num ? cnt.toInt() : items.length,
           );
         }
       }
     } catch (_) {}
-    return (<MedicineReview>[], 0, 0);
+    return (<MedicineReview>[], 0, 0, 0.0, 0);
   }
 
   Future<bool> addReview({
+    required String orderId,
     required String medicineId,
     required double rating,
     String? comment,
   }) async {
+    final normalized = rating.isNaN ? 1 : rating.round();
+    final safeRating = normalized.clamp(1, 5);
     try {
       final res = await _client.post(
-        '/medicines/$medicineId/reviews',
+        '/reviews',
         body: {
-          'rating': rating,
+          'orderId': orderId,
+          'medicineId': medicineId,
+          'rating': safeRating,
+          'comment': comment ?? '',
+        },
+      );
+      return res.statusCode >= 200 && res.statusCode < 300;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateReview({
+    required String reviewId,
+    required double rating,
+    String? comment,
+  }) async {
+    final normalized = rating.isNaN ? 1 : rating.round();
+    final safeRating = normalized.clamp(1, 5);
+    try {
+      final res = await _client.put(
+        '/reviews/$reviewId',
+        body: {
+          'rating': safeRating,
           'comment': comment ?? '',
         },
       );

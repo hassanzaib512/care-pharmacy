@@ -25,6 +25,7 @@ medicineSchema.index({ name: 'text', manufacturer: 'text' });
 medicineSchema.index({ category: 1 });
 medicineSchema.index({ tags: 1 });
 medicineSchema.index({ composition: 1 });
+medicineSchema.index({ rating: -1 });
 medicineSchema.index({ createdAt: -1 });
 // Enforce unique name only for non-deleted records
 medicineSchema.index(
